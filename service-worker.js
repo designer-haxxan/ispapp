@@ -2,7 +2,7 @@
    Bump VERSION whenever any cached file changes; clients update automatically. */
 // Cache names are namespaced: other apps on designer-haxxan.github.io share Cache Storage with this one.
 const APP_ID = 'ispdesk';
-const VERSION = `${APP_ID}-v2.1.1`;
+const VERSION = `${APP_ID}-v2.2.0`;
 // Caches left by earlier builds of this same project (the POS app) are removed on upgrade. Nothing else is touched.
 const isOwnCache = (key) => key.startsWith(`${APP_ID}-`) || /^disterp-v/.test(key) || /^saleapp-v/.test(key);
 const SHELL = [
@@ -12,10 +12,10 @@ const SHELL = [
   './js/core/link-login.js', './js/core/settings.js', './js/core/ui.js', './js/core/utils.js', './js/core/views.js',
   './js/db/idb.js', './js/db/schema.js',
   './js/modules/backup.js', './js/modules/collections.js', './js/modules/dashboard.js', './js/modules/expenses.js',
-  './js/modules/inventory.js', './js/modules/invoices.js', './js/modules/messages.js', './js/modules/plans.js',
+  './js/modules/import.js', './js/modules/inventory.js', './js/modules/invoices.js', './js/modules/messages.js', './js/modules/plans.js',
   './js/modules/settings.js', './js/modules/subscribers.js', './js/modules/tickets.js',
   './js/reports/reports.js',
-  './js/services/auth.js', './js/services/backup.js', './js/services/billing.js', './js/services/finance.js', './js/services/whatsapp.js',
+  './js/services/auth.js', './js/services/backup.js', './js/services/billing.js', './js/services/csv.js', './js/services/finance.js', './js/services/importer.js', './js/services/whatsapp.js',
 ];
 const CDN = [
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',

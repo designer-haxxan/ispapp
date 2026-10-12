@@ -97,15 +97,16 @@ async function renderRun($c) {
     for (const s of subs) {
       if (s.status !== 'active' && s.status !== 'suspended') continue;
       const plan = planById.get(s.planId);
-      if (!plan) { noPlan++; continue; }
+      const amount = s.customPrice ?? plan?.price;
+      if (!plan || !(amount > 0)) { noPlan++; continue; }
       if (billedKeys.has(`${s.id}|${ym}`)) { already++; continue; }
-      eligible++; total += s.customPrice ?? plan.price;
+      eligible++; total += amount;
     }
     $c.find('#run-preview').html(`<div class="row g-2">
       <div class="col-6 col-md-3"><div class="mini-stat"><div class="small text-body-secondary">Will be billed</div><div class="fw-bold fs-5">${eligible}</div></div></div>
       <div class="col-6 col-md-3"><div class="mini-stat"><div class="small text-body-secondary">Estimated total</div><div class="fw-bold fs-5">${esc(cur())} ${fmtNum(total)}</div></div></div>
       <div class="col-6 col-md-3"><div class="mini-stat"><div class="small text-body-secondary">Already billed</div><div class="fw-bold fs-5">${already}</div></div></div>
-      <div class="col-6 col-md-3"><div class="mini-stat ${noPlan ? 'warn' : ''}"><div class="small text-body-secondary">No plan (skipped)</div><div class="fw-bold fs-5">${noPlan}</div></div></div>
+      <div class="col-6 col-md-3"><div class="mini-stat ${noPlan ? 'warn' : ''}"><div class="small text-body-secondary">No plan or price (skipped)</div><div class="fw-bold fs-5">${noPlan}</div></div></div>
     </div>`);
     $c.find('#run-go').prop('disabled', eligible === 0);
     $c.find('#run-go').data('eligible', eligible);

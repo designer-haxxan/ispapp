@@ -113,10 +113,11 @@ export async function generateMonthlyRun(period) {
     for (const sub of subs) {
       if (sub.status !== 'active' && sub.status !== 'suspended') continue;
       const plan = plans.get(sub.planId);
-      if (!plan) { res.noPlan++; continue; }
+      // No plan, or a plan still at price 0 (e.g. created by an import): skip rather than fail the whole run.
+      const amount = sub.customPrice ?? plan?.price;
+      if (!plan || !(amount > 0)) { res.noPlan++; continue; }
       const periodKey = `${sub.id}|${period}`;
       if (await t.getByIndex('invoices', 'periodKey', periodKey)) { res.skipped++; continue; }
-      const amount = sub.customPrice ?? plan.price;
       const inv = await insertInvoice(t, {
         subscriberId: sub.id, period, periodKey, issueDate, dueDate,
         items: [{ kind: 'plan', description: `${plan.name} · ${period}`, amount }],

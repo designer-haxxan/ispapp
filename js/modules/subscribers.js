@@ -136,7 +136,7 @@ async function renderList($c, ctx) {
   const planById = new Map(plans.map((p) => [p.id, p]));
   const counts = Object.fromEntries(Object.keys(STATUSES).map((k) => [k, subs.filter((s) => s.status === k).length]));
   $c.html(`
-    ${UI.pageHeader('Customers', Auth.can('subscriber.manage') ? '<button class="btn btn-primary btn-sm" data-add><i class="bi bi-person-plus me-1"></i>Add customer</button>' : '')}
+    ${UI.pageHeader('Customers', Auth.can('subscriber.manage') ? '<a class="btn btn-outline-primary btn-sm" href="#/import"><i class="bi bi-upload me-1"></i>Import</a> <button class="btn btn-primary btn-sm" data-add><i class="bi bi-person-plus me-1"></i>Add customer</button>' : '')}
     <div class="filters mb-3">
       <input type="search" class="form-control" id="sub-q" placeholder="Search name, mobile, CNIC, code or area" autocomplete="off">
     </div>
@@ -233,6 +233,7 @@ async function renderDetail($c, id, ctx) {
           ${dl('Address', esc(sub.address || ''))}
           ${dl('Monthly price', `${esc(cur())} ${fmtNum(price)}${sub.customPrice != null ? ' <span class="text-body-secondary">(custom)</span>' : ''}`)}
           ${dl('Installed', sub.installDate ? fmtDate(sub.installDate) : '')}
+          ${dl('Expiry (from import)', sub.expiryDate ? fmtDate(sub.expiryDate) : '')}
           ${dl('PPPoE user', esc(sub.pppoeUser || ''))}
           ${dl('IP address', esc(sub.ipAddress || ''))}
           ${dl('ONU / router', esc(sub.equipment || ''))}

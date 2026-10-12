@@ -16,6 +16,7 @@ const ROUTES = {
   invoices: [() => import('./modules/invoices.js'), 'Invoices', null, 'receipt', 'Main'],
   subscribers: [() => import('./modules/subscribers.js'), 'Subscribers', null, 'people', 'Customers'],
   plans: [() => import('./modules/plans.js'), 'Plans & pricing', null, 'wifi', 'Customers'],
+  import: [() => import('./modules/import.js'), 'Import customers', 'subscriber.manage', 'upload', 'Customers'],
   messages: [() => import('./modules/messages.js'), 'WhatsApp', 'whatsapp.send', 'whatsapp', 'Customers'],
   tickets: [() => import('./modules/tickets.js'), 'Complaints & faults', null, 'tools', 'Operations'],
   inventory: [() => import('./modules/inventory.js'), 'Inventory', null, 'boxes', 'Operations'],
