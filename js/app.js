@@ -5,29 +5,26 @@ import * as UI from './core/ui.js';
 import { esc } from './core/utils.js';
 import { openDB } from './db/idb.js';
 import * as Auth from './services/auth.js';
-import * as Catalog from './services/catalog.js';
 
 const $ = window.jQuery;
 
 // Route table: name → [loader, title, permission|null, icon, menu section]
+// Pages are viewable by everyone who can log in; the actions inside each page check their own permission.
 const ROUTES = {
   dashboard: [() => import('./modules/dashboard.js'), 'Dashboard', null, 'house', 'Main'],
-  pos: [() => import('./modules/pos.js'), 'New Sale', 'sale.create', 'cart-plus', 'Main'],
-  sales: [() => import('./modules/documents.js'), 'Sales', null, 'receipt', 'Main'],
-  purchase: [() => import('./modules/pos.js'), 'New Purchase', 'purchase.manage', null, null],
-  purchases: [() => import('./modules/documents.js'), 'Purchases', 'purchase.manage', 'bag', 'Main'],
-  returns: [() => import('./modules/documents.js'), 'Returns', null, 'arrow-return-left', 'Main'],
-  products: [() => import('./modules/products.js'), 'Products', null, 'box-seam', 'Inventory'],
-  stock: [() => import('./modules/stock.js'), 'Stock', null, 'boxes', 'Inventory'],
-  customers: [() => import('./modules/parties.js'), 'Customers', null, 'people', 'Parties'],
-  suppliers: [() => import('./modules/parties.js'), 'Suppliers', 'purchase.manage', 'truck', 'Parties'],
-  vouchers: [() => import('./modules/vouchers.js'), 'Cash Book & Payments', 'voucher.create', 'cash-coin', 'Accounts'],
-  accounts: [() => import('./modules/accounts.js'), 'Accounts', 'account.manage', 'bank', 'Accounts'],
-  reports: [() => import('./reports/reports.js'), 'Reports', 'reports.view', 'bar-chart-line', 'Accounts'],
+  collect: [() => import('./modules/collections.js'), 'Collections', 'payment.record', 'cash-coin', 'Main'],
+  invoices: [() => import('./modules/invoices.js'), 'Invoices', null, 'receipt', 'Main'],
+  subscribers: [() => import('./modules/subscribers.js'), 'Subscribers', null, 'people', 'Customers'],
+  plans: [() => import('./modules/plans.js'), 'Plans & pricing', null, 'wifi', 'Customers'],
+  messages: [() => import('./modules/messages.js'), 'WhatsApp', 'whatsapp.send', 'whatsapp', 'Customers'],
+  tickets: [() => import('./modules/tickets.js'), 'Complaints & faults', null, 'tools', 'Operations'],
+  inventory: [() => import('./modules/inventory.js'), 'Inventory', null, 'boxes', 'Operations'],
+  expenses: [() => import('./modules/expenses.js'), 'Expenses', 'expense.manage', 'wallet2', 'Finance'],
+  reports: [() => import('./reports/reports.js'), 'Profit & loss', 'reports.view', 'bar-chart-line', 'Finance'],
   backup: [() => import('./modules/backup.js'), 'Backup & Restore', 'backup.export', 'cloud-arrow-down', 'Administration'],
   settings: [() => import('./modules/settings.js'), 'Settings', null, 'gear', 'Administration'],
 };
-const FOCUS_ROUTES = new Set(['pos', 'purchase']);
+const FOCUS_ROUTES = new Set();
 
 let currentModule = null;
 let routeToken = 0;
@@ -105,7 +102,7 @@ function buildMenu() {
   $('#user-role').text(Auth.ROLES[u.role] || u.role);
   $('#user-avatar').text(UI.initials(u.name));
   $('#brand-name').text(getSettings().business.name || CONFIG.APP_NAME);
-  $('#bottom-nav [data-route="pos"]').toggleClass('d-none', !Auth.can('sale.create'));
+  $('#bottom-nav [data-route="collect"]').toggleClass('d-none', !Auth.can('payment.record'));
 }
 
 async function route() {
@@ -115,6 +112,8 @@ async function route() {
   const parts = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/').map(decodeURIComponent);
   const name = ROUTES[parts[0]] ? parts[0] : 'dashboard';
   const [loader, title, perm] = ROUTES[name];
+  // A dialog left open (e.g. "Payment recorded") must not stay on top of the next page.
+  document.querySelectorAll('.modal.show').forEach((el) => bootstrap.Modal.getInstance(el)?.hide());
   try { currentModule?.destroy?.(); } catch (e) { console.warn(e); }
   currentModule = null;
   bootstrap.Offcanvas.getInstance('#menu-offcanvas')?.hide();
@@ -141,7 +140,6 @@ async function route() {
 
 // ---------- Auth gate ----------
 async function startApp() {
-  await Catalog.load();
   buildMenu();
   showView('app');
   renderConn(navigator.onLine ? 'online' : 'offline');
@@ -152,7 +150,7 @@ async function startApp() {
 }
 
 async function doLogout(forced = false, reason = '') {
-  if (!forced && !await UI.confirmDialog('Log out of this device? Your POS data stays on this device, but signing in again requires an internet connection.', { okLabel: 'Log out', okClass: 'btn-danger' })) return;
+  if (!forced && !await UI.confirmDialog('Log out of this device? Your ISP data stays on this device, but signing in again requires an internet connection.', { okLabel: 'Log out', okClass: 'btn-danger' })) return;
   clearInterval(expiryTimer);
   try { currentModule?.destroy?.(); } catch { /* ignore */ }
   currentModule = null;

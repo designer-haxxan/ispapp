@@ -1,13 +1,13 @@
 {
-  "name": "SaleAPP POS",
-  "short_name": "SaleAPP",
-  "description": "Offline-first point of sale with sales, purchases, stock, accounts and reports.",
+  "name": "ISP Desk",
+  "short_name": "ISP Desk",
+  "description": "Billing, collections, WhatsApp reminders, complaints, inventory, expenses and profit & loss for internet service providers.",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0f0c29",
+  "background_color": "#0b1020",
   "theme_color": "#4f46e5",
   "categories": ["business", "finance", "productivity"],
   "icons": [
@@ -16,7 +16,8 @@
     { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "New sale", "url": "./index.html#/pos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Dashboard", "url": "./index.html#/dashboard", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Collect payment", "url": "./index.html#/collect", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Monthly billing run", "url": "./index.html#/invoices/run", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Complaints", "url": "./index.html#/tickets", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

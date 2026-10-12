@@ -1,28 +1,49 @@
-// Reusable view fragments: document links, ledger tables, date filters, balance formatting.
-import { esc, fmtNum, fmtDate, today, monthStart } from './utils.js';
+// Reusable view fragments: money, status badges, month helpers, date filters and paging.
+import { esc, fmtNum, today, monthStart, round2 } from './utils.js';
 import { getSettings } from './settings.js';
 
 export const cur = () => getSettings().currency;
 export const money = (n) => `${esc(cur())} ${fmtNum(n)}`;
 
-const REF_ROUTES = {
-  sale: (id) => `#/sales/${id}`, purchase: (id) => `#/purchases/${id}`,
-  saleReturn: (id) => `#/returns/sale/${id}`, purchaseReturn: (id) => `#/returns/purchase/${id}`,
-  receipt: (id) => `#/vouchers/${id}`, payment: (id) => `#/vouchers/${id}`, transfer: (id) => `#/vouchers/${id}`,
+// Status pill. tone: success | warning | danger | secondary | info | primary
+const TONES = {
+  active: 'success', paid: 'success', resolved: 'success', done: 'success',
+  pending: 'warning', partial: 'warning', in_progress: 'info', open: 'warning',
+  overdue: 'danger', unpaid: 'danger', suspended: 'warning', disconnected: 'secondary', void: 'secondary',
 };
-export const REF_LABELS = { sale: 'Sale', purchase: 'Purchase', saleReturn: 'Sale return', purchaseReturn: 'Purchase return', receipt: 'Receipt', payment: 'Payment', transfer: 'Transfer', opening: 'Opening balance' };
-
-export function refLink(refType, id, text) {
-  const r = REF_ROUTES[refType];
-  return r ? `<a href="${r(encodeURIComponent(id))}">${esc(text)}</a>` : esc(text);
+const LABELS = {
+  in_progress: 'In progress', unpaid: 'Unpaid', void: 'Void', pending: 'Pending', overdue: 'Overdue',
+};
+export function badge(status, label = null) {
+  const tone = TONES[status] || 'secondary';
+  const text = label || LABELS[status] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : '');
+  return `<span class="badge-soft tone-${tone}">${esc(text)}</span>`;
 }
 
-// Balance with Dr/Cr suffix. debitNormal: true for customers/cash/bank/assets/expenses.
-export function balText(balance, debitNormal = true) {
-  const v = debitNormal ? balance : -balance;
-  if (Math.abs(v) < 0.005) return money(0);
-  return v > 0 ? money(v) : `${money(-v)} ${debitNormal ? 'Cr' : 'Dr'}`;
+// "2026-10" -> "Oct 2026"
+export function monthLabel(ym) {
+  if (!ym) return '';
+  const d = new Date(ym + '-01T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
+export const currentMonth = () => today().slice(0, 7);
+export const addMonths = (ym, n) => {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+// Adds days to a YYYY-MM-DD string (local calendar arithmetic, no timezone drift).
+export function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+export const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+export const monthOf = (dateStr) => String(dateStr || '').slice(0, 7);
+export function monthRange(ym) {
+  return [ym + '-01', addDays(addMonths(ym, 1) + '-01', -1)];
+}
+export const pct = (n) => `${round2(n).toFixed(1)}%`;
 
 export function dateFilter(from, to, extra = '') {
   return `<form class="filters date-filter">
@@ -43,7 +64,7 @@ export function rangeFor(key) {
   if (key === 'month') return [monthStart(), today()];
   return ['2000-01-01', today()];
 }
-// Wires the quick-range buttons; calls cb(from, to) on apply.
+// Wires the quick-range buttons; calls cb(from, to, values) on apply.
 export function bindDateFilter($root, cb) {
   $root.on('click', '.date-filter [data-range]', function () {
     const [f, t] = rangeFor(this.dataset.range);
@@ -58,24 +79,7 @@ export function bindDateFilter($root, cb) {
   });
 }
 
-export function ledgerTable(led, { debitNormal = true, showAccount = false, accountName = null } = {}) {
-  const rows = led.rows.map((e) => `<tr>
-      <td class="text-nowrap">${fmtDate(e.date)}</td>
-      <td class="text-nowrap">${refLink(e.refType, e.txnId, e.refNo || '')}<div class="small text-body-secondary">${esc(REF_LABELS[e.refType] || e.refType)}</div></td>
-      ${showAccount ? `<td>${esc(accountName ? accountName(e.accountId) : e.accountId)}</td>` : ''}
-      <td class="small">${esc(e.memo)}</td>
-      <td class="num">${e.debit ? fmtNum(e.debit) : ''}</td>
-      <td class="num">${e.credit ? fmtNum(e.credit) : ''}</td>
-      <td class="num fw-semibold">${balText(e.running, debitNormal)}</td></tr>`).join('');
-  return `<div class="table-responsive"><table class="table table-sm table-hover table-report align-middle mb-0">
-    <thead><tr><th>Date</th><th>Ref</th>${showAccount ? '<th>Account</th>' : ''}<th>Details</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead>
-    <tbody><tr class="table-light"><td colspan="${showAccount ? 6 : 5}">Opening balance</td><td class="num fw-semibold">${balText(led.opening, debitNormal)}</td></tr>
-    ${rows || `<tr><td colspan="${showAccount ? 7 : 6}" class="text-center text-body-secondary py-3">No transactions in this period</td></tr>`}</tbody>
-    <tfoot><tr class="fw-semibold"><td colspan="${showAccount ? 4 : 3}">Totals / closing</td><td class="num">${fmtNum(led.debit)}</td><td class="num">${fmtNum(led.credit)}</td><td class="num">${balText(led.closing, debitNormal)}</td></tr></tfoot>
-    </table></div>`;
-}
-
-// Simple incremental "load more" list rendering (keeps the DOM small).
+// Simple incremental "show more" list rendering (keeps the DOM small).
 export function pager($container, items, rowFn, pageSize = 50, empty = '') {
   let shown = 0;
   const more = () => {
@@ -89,4 +93,15 @@ export function pager($container, items, rowFn, pageSize = 50, empty = '') {
   if (!items.length) { $container.html(empty); return; }
   $container.off('click.pager').on('click.pager', '.pager-more', more);
   more();
+}
+
+// Animated SVG ring (0–100). Used for collection rate and similar percentages.
+export function ring(value, { size = 104, stroke = 10, label = '', tint = 'var(--brand)' } = {}) {
+  const v = Math.max(0, Math.min(100, Number(value) || 0));
+  const r = (size - stroke) / 2; const c = 2 * Math.PI * r;
+  return `<div class="ring" style="width:${size}px;height:${size}px" role="img" aria-label="${esc(label)} ${v.toFixed(0)} percent">
+    <svg viewBox="0 0 ${size} ${size}"><circle class="ring-track" cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}"/>
+    <circle class="ring-fill" cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" stroke="${tint}"
+      stroke-dasharray="${c}" style="--ring-from:${c};--ring-to:${c * (1 - v / 100)}"/></svg>
+    <div class="ring-val"><b data-count="${v.toFixed(1)}" data-pct="1">0%</b><span>${esc(label)}</span></div></div>`;
 }

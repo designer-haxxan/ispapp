@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Offline-first point of sale with sales, purchases, stock, accounts and reports.">
+  <meta name="description" content="ISP Desk: subscribers, monthly billing, collections, WhatsApp reminders, complaints, inventory, expenses and profit & loss for internet service providers.">
   <meta name="theme-color" content="#4f46e5">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://eposwala.com https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SaleAPP POS">
+  <meta name="apple-mobile-web-app-title" content="ISP Desk">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -17,13 +17,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.css">
   <link rel="stylesheet" href="css/app.css">
-  <title>SaleAPP POS</title>
+  <link rel="stylesheet" href="css/isp-theme.css">
+  <title>ISP Desk</title>
 </head>
 <body>
+  <div class="aurora" aria-hidden="true"></div>
+
   <!-- Splash / loading screen -->
   <div id="splash">
     <div class="splash-logo"><img src="icons/icon-192.png" alt=""></div>
-    <div class="splash-name mt-3">SaleAPP POS</div>
+    <div class="splash-name mt-3">ISP Desk</div>
     <div class="splash-bar" role="status"><span class="visually-hidden">Loading</span></div>
     <div id="splash-error" class="text-danger small mt-3 px-4 text-center"></div>
   </div>
@@ -36,56 +39,60 @@
         <section class="auth-hero">
           <div class="brand-row">
             <div class="brand-mark"><img src="icons/icon-192.png" alt=""></div>
-            <div><div class="name">SaleAPP POS</div><div class="tag">Point of Sale · Inventory · Accounts</div></div>
+            <div><div class="name">ISP Desk</div><div class="tag">Billing · Collections · Support · WhatsApp</div></div>
           </div>
-          <h1>Run your whole business <span class="grad">from one app.</span></h1>
-          <p class="lead-sm">Sell, buy, track stock and keep your accounts — for any shop, wholesaler or distributor. Works even without internet.</p>
+          <h1>Run your internet business <span class="grad">from one desk.</span></h1>
+          <p class="lead-sm">Monthly bills, JazzCash &amp; Easypaisa collections, defaulter reminders on WhatsApp, fault tickets, stock and profit &amp; loss. Works even when the internet drops.</p>
           <ul class="feature-chips">
-            <li><i class="bi bi-wifi-off"></i>Works offline</li>
-            <li><i class="bi bi-box-seam"></i>Inventory</li>
-            <li><i class="bi bi-journal-check"></i>Accounts &amp; ledgers</li>
-            <li><i class="bi bi-upc-scan"></i>Barcode</li>
-            <li><i class="bi bi-printer"></i>Bluetooth receipts</li>
-            <li><i class="bi bi-translate"></i><span class="ur-chip">اردو رسید</span></li>
+            <li><i class="bi bi-receipt"></i>Monthly billing</li>
+            <li><i class="bi bi-wallet2"></i>Collections</li>
+            <li><i class="bi bi-whatsapp"></i>WhatsApp reminders</li>
+            <li><i class="bi bi-tools"></i>Fault tickets</li>
+            <li><i class="bi bi-graph-up-arrow"></i>Profit &amp; loss</li>
+            <li><i class="bi bi-translate"></i><span class="ur-chip">اردو</span></li>
           </ul>
           <div class="hero-art" aria-hidden="true">
             <svg viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="hg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity=".06"/></linearGradient>
                 <linearGradient id="hg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
-                <linearGradient id="hg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0abfc"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+                <linearGradient id="hg3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+                <radialGradient id="hg4"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#67e8f9" stop-opacity="0"/></radialGradient>
               </defs>
+              <!-- fiber backbone from the POP tower to the customer houses -->
+              <path class="fiber" d="M90 240 C170 120, 260 280, 340 150 S 470 120, 480 70" fill="none" stroke="url(#hg3)" stroke-width="3" stroke-linecap="round"/>
+              <path class="fiber fiber-2" d="M90 240 C180 210, 250 60, 360 100" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="4 7"/>
+              <circle class="packet" r="5" fill="url(#hg4)"><animateMotion dur="3.2s" repeatCount="indefinite" path="M90 240 C170 120, 260 280, 340 150 S 470 120, 480 70"/></circle>
+              <circle class="packet" r="4" fill="url(#hg4)"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M90 240 C170 120, 260 280, 340 150 S 470 120, 480 70"/></circle>
+              <!-- POP tower -->
               <g class="float-a">
-                <rect x="40" y="30" width="330" height="220" rx="22" fill="url(#hg1)" stroke="rgba(255,255,255,.25)"/>
-                <circle cx="66" cy="54" r="5" fill="#f87171"/><circle cx="82" cy="54" r="5" fill="#fbbf24"/><circle cx="98" cy="54" r="5" fill="#34d399"/>
-                <rect x="64" y="78" width="120" height="12" rx="6" fill="rgba(255,255,255,.55)"/>
-                <rect x="64" y="98" width="80" height="22" rx="8" fill="#fff"/>
-                <rect class="bar" x="70"  y="170" width="26" height="54"  rx="6" fill="url(#hg2)" style="animation-delay:.1s"/>
-                <rect class="bar" x="110" y="150" width="26" height="74"  rx="6" fill="url(#hg2)" style="animation-delay:.2s"/>
-                <rect class="bar" x="150" y="180" width="26" height="44"  rx="6" fill="url(#hg2)" style="animation-delay:.3s"/>
-                <rect class="bar" x="190" y="130" width="26" height="94"  rx="6" fill="url(#hg2)" style="animation-delay:.4s"/>
-                <rect class="bar" x="230" y="145" width="26" height="79"  rx="6" fill="url(#hg2)" style="animation-delay:.5s"/>
-                <rect class="bar" x="270" y="110" width="26" height="114" rx="6" fill="url(#hg3)" style="animation-delay:.6s"/>
-                <rect class="bar" x="310" y="125" width="26" height="99"  rx="6" fill="url(#hg2)" style="animation-delay:.7s"/>
+                <path d="M90 240 L72 300 M90 240 L108 300 M80 280 H100" stroke="#e0e7ff" stroke-width="3" fill="none"/>
+                <path d="M90 240 m-18 -18 a26 26 0 0 0 0 36 M90 240 m18 -18 a26 26 0 0 1 0 36 M90 240 m-34 -34 a48 48 0 0 0 0 68 M90 240 m34 -34 a48 48 0 0 1 0 68" stroke="#a5f3fc" stroke-width="2.5" fill="none" class="wave"/>
+                <circle cx="90" cy="240" r="7" fill="#fff"/>
               </g>
+              <!-- invoice card -->
               <g class="float-b">
-                <path d="M392 70 h96 a10 10 0 0 1 10 10 v170 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 V80 a10 10 0 0 1 10 -10z" fill="#fff"/>
-                <rect x="410" y="92" width="64" height="9" rx="4.5" fill="#6366f1"/>
-                <rect x="404" y="114" width="76" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="128" width="58" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="142" width="70" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="156" width="48" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="178" width="76" height="2" fill="#c7d2fe"/>
-                <rect x="404" y="190" width="40" height="10" rx="5" fill="#111827"/><rect x="452" y="190" width="28" height="10" rx="5" fill="#16a34a"/>
-                <g transform="translate(410 208)"><rect width="2" height="18" fill="#111827"/><rect x="5" width="1" height="18" fill="#111827"/><rect x="9" width="3" height="18" fill="#111827"/><rect x="15" width="1" height="18" fill="#111827"/><rect x="19" width="2" height="18" fill="#111827"/><rect x="24" width="1" height="18" fill="#111827"/><rect x="28" width="3" height="18" fill="#111827"/><rect x="34" width="2" height="18" fill="#111827"/><rect x="39" width="1" height="18" fill="#111827"/><rect x="43" width="3" height="18" fill="#111827"/><rect x="49" width="2" height="18" fill="#111827"/><rect x="54" width="1" height="18" fill="#111827"/><rect x="58" width="3" height="18" fill="#111827"/></g>
+                <rect x="290" y="200" width="150" height="104" rx="14" fill="#fff"/>
+                <rect x="306" y="216" width="80" height="9" rx="4.5" fill="#6366f1"/>
+                <rect x="306" y="236" width="118" height="6" rx="3" fill="#e5e7eb"/><rect x="306" y="248" width="96" height="6" rx="3" fill="#e5e7eb"/>
+                <rect x="306" y="268" width="58" height="10" rx="5" fill="#111827"/>
+                <rect class="bar" x="372" y="266" width="8" height="12" rx="2" fill="#16a34a" style="animation-delay:.2s"/>
+                <rect class="bar" x="384" y="262" width="8" height="16" rx="2" fill="#16a34a" style="animation-delay:.35s"/>
+                <rect class="bar" x="396" y="256" width="8" height="22" rx="2" fill="#16a34a" style="animation-delay:.5s"/>
               </g>
-              <g class="float-b"><circle cx="34" cy="272" r="26" fill="#fbbf24"/><circle cx="34" cy="272" r="18" fill="none" stroke="#fde68a" stroke-width="3"/><text x="34" y="279" text-anchor="middle" font-size="18" font-weight="800" fill="#92400e">Rs</text></g>
-              <g class="float-a"><rect x="300" y="262" width="62" height="50" rx="8" fill="#22d3ee"/><path d="M300 278 h62" stroke="#0e7490" stroke-width="3"/><rect x="322" y="262" width="18" height="16" fill="#67e8f9"/></g>
+              <!-- paid badge -->
+              <g class="float-a"><circle cx="446" cy="250" r="24" fill="#16a34a"/><path d="M436 250 l7 7 l14 -15" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" class="tick"/></g>
+              <!-- WhatsApp-style notice -->
+              <g class="float-b"><rect x="26" y="40" width="170" height="54" rx="14" fill="rgba(255,255,255,.92)"/><circle cx="50" cy="67" r="12" fill="#25d366"/><path d="M45 72 l3 -9 l3 2 l3 -2 l-2 9 z" fill="#fff"/><rect x="72" y="58" width="100" height="7" rx="3.5" fill="#94a3b8"/><rect x="72" y="72" width="70" height="6" rx="3" fill="#cbd5e1"/></g>
+              <!-- collected ring -->
+              <g class="float-a"><circle cx="440" cy="110" r="38" fill="rgba(255,255,255,.14)"/><circle cx="440" cy="110" r="28" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="8"/><circle class="ring-arc" cx="440" cy="110" r="28" fill="none" stroke="#67e8f9" stroke-width="8" stroke-linecap="round" stroke-dasharray="176" stroke-dashoffset="176" transform="rotate(-90 440 110)"/></g>
             </svg>
           </div>
         </section>
 
         <section class="auth-card" aria-labelledby="login-title">
           <h2 id="login-title">Welcome back</h2>
-          <div class="sub">Sign in to your shop to continue</div>
+          <div class="sub">Sign in to your ISP desk to continue</div>
           <div id="login-notice" class="alert alert-warning small d-none"></div>
           <form id="login-form" novalidate>
             <div class="field">
@@ -112,7 +119,7 @@
   <!-- Application -->
   <div id="view-app" class="d-none">
     <aside id="sidebar" class="d-none d-lg-flex flex-column">
-      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">SaleAPP POS</span></div>
+      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">ISP Desk</span></div>
       <nav class="nav flex-column flex-grow-1 overflow-auto nav-menu" aria-label="Main"></nav>
     </aside>
     <div class="app-main">
@@ -135,9 +142,9 @@
     </div>
     <nav id="bottom-nav" class="d-lg-none" aria-label="Quick navigation">
       <a href="#/dashboard" data-route="dashboard"><i class="bi bi-house"></i><span>Home</span></a>
-      <a href="#/sales" data-route="sales"><i class="bi bi-receipt"></i><span>Sales</span></a>
-      <a href="#/pos" data-route="pos" class="nav-sell"><i class="bi bi-cart-plus-fill"></i><span>Sell</span></a>
-      <a href="#/products" data-route="products"><i class="bi bi-box-seam"></i><span>Products</span></a>
+      <a href="#/invoices" data-route="invoices"><i class="bi bi-receipt"></i><span>Invoices</span></a>
+      <a href="#/collect" data-route="collect" class="nav-sell"><i class="bi bi-cash-coin"></i><span>Collect</span></a>
+      <a href="#/subscribers" data-route="subscribers"><i class="bi bi-people"></i><span>Customers</span></a>
       <a href="#" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas"><i class="bi bi-grid"></i><span>More</span></a>
     </nav>
   </div>

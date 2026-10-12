@@ -2,19 +2,25 @@
 import { storageKey } from '../config.js';
 
 const KEY = storageKey('settings');
-const LEGACY_KEY = 'pos.settings'; // shared by older builds on the same origin; copied once as a starting point
+
+export const DEFAULT_TEMPLATES = {
+  invoice: 'Assalam o Alaikum {name}, your {plan} internet bill for {month} is {amount}. Due date: {due}. Pay via {payment}. Customer code {code}. Thank you - {business}',
+  reminder: 'Assalam o Alaikum {name}, a friendly reminder that your internet bill of {balance} is pending (due {due}). Please pay to avoid service interruption. Pay via {payment}. - {business}',
+  overdue: 'Assalam o Alaikum {name}, your internet bill of {balance} is overdue. Your connection may be suspended if it is not paid soon. Pay via {payment}. Helpline {phone}. - {business}',
+  paid: 'Thank you {name}! We received {amount} for your internet bill. Remaining balance: {balance}. Receipt {receipt}. - {business}',
+  ticket: 'Assalam o Alaikum {name}, we have logged your complaint {ticket} ({issue}). Our team is working on it. Helpline {phone}. - {business}',
+  outage: 'Assalam o Alaikum {name}, we are aware of an internet outage in {area}. Our team is working on it and service will be restored as soon as possible. Sorry for the inconvenience. - {business}',
+};
 
 export const DEFAULT_SETTINGS = {
-  business: { name: 'My Store', address: '', phone: '', taxNo: '', footer: 'Thank you for your purchase!' },
+  business: { name: 'My ISP', address: '', phone: '', ptaLicence: '', ntn: '', footer: 'Please pay before the due date to avoid suspension.' },
+  payment: { jazzcash: '', easypaisa: '', bank: '', raast: '' },
   currency: 'Rs',
-  taxEnabled: false,
-  taxRate: 0,
+  taxRate: 0, // percent, e.g. 16 for 16 % sales tax. Confirm the rate for your services with your accountant.
+  billing: { dueDays: 10, suspendAfterDays: 7, billingDay: 1, autoApplyCredit: true },
   allowNegativeStock: false,
-  updatePurchasePrice: true,
-  prefixes: { sale: 'SALE', purchase: 'PUR', saleReturn: 'SRN', purchaseReturn: 'PRN', receipt: 'RCV', payment: 'PAY', transfer: 'TRF', adjustment: 'ADJ' },
-  printer: { method: 'browser', width: 58, autoPrint: false, copies: 1, chunkSize: 20, imageMode: 'gsv0', deviceName: '', deviceId: '' },
+  whatsapp: { countryCode: '92', templates: {} },
   theme: 'auto',
-  register: 'Main',
 };
 
 function merge(base, over) {
@@ -30,10 +36,15 @@ let cache = null;
 export function getSettings() {
   if (!cache) {
     let stored = {};
-    try { stored = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY) || '{}'); } catch { stored = {}; }
+    try { stored = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { stored = {}; }
     cache = merge(DEFAULT_SETTINGS, stored);
   }
   return cache;
+}
+
+// Message template in use: the user's override if set, otherwise the default.
+export function template(name) {
+  return getSettings().whatsapp.templates?.[name] || DEFAULT_TEMPLATES[name];
 }
 
 export function saveSettings(patch) {
@@ -59,5 +70,5 @@ export function applyTheme() {
   const t = getSettings().theme;
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f1117' : '#f4f5fb');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1020' : '#f4f5fb');
 }

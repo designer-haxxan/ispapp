@@ -1,0 +1,182 @@
+/* ISP Desk visual theme: network-inspired palette, living backdrop and motion.
+   Loaded after app.css, so it only overrides tokens and components. */
+
+:root {
+  --isp-cyan: #06b6d4;
+  --isp-indigo: #4f46e5;
+  --isp-lime: #22c55e;
+  --isp-rose: #f43f5e;
+  --brand: #4f46e5;
+  --brand-grad: linear-gradient(120deg, #4f46e5 0%, #2563eb 45%, #06b6d4 100%);
+  --brand-soft: rgba(6, 182, 212, .12);
+  --app-bg: #eef3fb;
+  --surface: rgba(255, 255, 255, .86);
+  --glass-border: rgba(99, 102, 241, .14);
+  --shadow: 0 10px 30px -12px rgba(30, 41, 99, .25), 0 2px 8px -2px rgba(30, 41, 99, .08);
+  --shadow-glow: 0 0 0 1px rgba(6, 182, 212, .25), 0 12px 40px -10px rgba(6, 182, 212, .45);
+}
+[data-bs-theme="dark"] {
+  --app-bg: #070b16;
+  --surface: rgba(17, 24, 39, .72);
+  --glass-border: rgba(125, 211, 252, .12);
+  --brand-soft: rgba(6, 182, 212, .14);
+  --shadow: 0 14px 40px -14px rgba(0, 0, 0, .7);
+  --shadow-glow: 0 0 0 1px rgba(34, 211, 238, .28), 0 14px 46px -12px rgba(34, 211, 238, .45);
+}
+body { background: var(--app-bg); }
+
+/* ---------- Living backdrop: drifting aurora behind every page ---------- */
+.aurora { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
+  filter: blur(80px); opacity: .32; animation: drift 24s ease-in-out infinite alternate;
+}
+.aurora::before { background: radial-gradient(circle, #6366f1 0%, transparent 62%); top: -22%; left: -18%; }
+.aurora::after { background: radial-gradient(circle, #06b6d4 0%, transparent 62%); bottom: -28%; right: -16%; animation-delay: -9s; }
+[data-bs-theme="dark"] .aurora::before, [data-bs-theme="dark"] .aurora::after { opacity: .22; }
+@keyframes drift { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(7vw, 5vh) scale(1.12); } }
+
+/* Fibre-grid texture on the page (very faint) */
+#content { position: relative; }
+.app-main::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+  background-image: linear-gradient(rgba(99, 102, 241, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, .06) 1px, transparent 1px);
+  background-size: 44px 44px; mask-image: radial-gradient(ellipse at top, #000 20%, transparent 75%);
+}
+[data-bs-theme="dark"] .app-main::before { background-image: linear-gradient(rgba(125, 211, 252, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 211, 252, .05) 1px, transparent 1px); }
+
+/* ---------- Surfaces: glass cards with a gradient edge on hover ---------- */
+.card-soft, .stat-card, .list-card, .viz-card, .profile-card, .plan-card, .card, .mini-stat, .bal-tile, .card-soft {
+  background: var(--surface) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--shadow) !important;
+  border-radius: 18px !important;
+}
+.list-card { overflow: hidden; }
+.list-row { transition: background .2s, padding-left .25s var(--ease); }
+.list-row:hover { background: var(--brand-soft); padding-left: 1.35rem; }
+.stat-card { transition: transform .3s var(--ease), box-shadow .3s; position: relative; }
+.stat-card:hover, a.stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow) !important; }
+.hub-tile { transition: transform .3s var(--ease), box-shadow .3s; }
+.hub-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-glow); }
+
+/* Icon chips glow and bob on hover */
+.icon-chip { transition: transform .4s var(--ease), box-shadow .4s; }
+.stat-card:hover .icon-chip, .hub-tile:hover .icon-chip { transform: scale(1.08) rotate(-4deg); box-shadow: 0 8px 22px -6px rgba(6, 182, 212, .55); }
+
+/* ---------- Buttons ---------- */
+.btn-primary, .btn-primary:focus-visible {
+  background-image: linear-gradient(120deg, #4f46e5, #0891b2);
+  border: 0; box-shadow: 0 8px 20px -8px rgba(8, 145, 178, .6);
+}
+.btn-primary:hover { background-image: linear-gradient(120deg, #4338ca, #0e7490); }
+.btn-success { background-image: linear-gradient(120deg, #16a34a, #0d9488); border: 0; box-shadow: 0 8px 20px -8px rgba(22, 163, 74, .55); }
+.btn-outline-primary { border-width: 1.5px; }
+.btn-light { background: var(--surface); border: 1px solid var(--glass-border); }
+
+/* ---------- Navigation: glowing active state, LED status ---------- */
+#sidebar { background: color-mix(in srgb, var(--surface) 92%, transparent); border-right: 1px solid var(--glass-border); }
+.sidebar-brand .logo { position: relative; }
+.sidebar-brand .logo::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 16px; border: 2px solid rgba(6, 182, 212, .5);
+  animation: pulseRing 2.8s ease-out infinite;
+}
+@keyframes pulseRing { 0% { transform: scale(.9); opacity: .9; } 100% { transform: scale(1.35); opacity: 0; } }
+.nav-menu .nav-link { border-radius: 12px; margin: 2px 10px; transition: background .25s, color .25s, transform .25s var(--ease); }
+.nav-menu .nav-link:hover { transform: translateX(3px); }
+.nav-menu .nav-link.active {
+  background: linear-gradient(90deg, rgba(6, 182, 212, .22), rgba(79, 70, 229, .08));
+  box-shadow: inset 3px 0 0 #06b6d4, 0 0 22px -8px rgba(6, 182, 212, .6);
+}
+.nav-menu .nav-section { letter-spacing: .12em; }
+#bottom-nav { background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--glass-border); }
+#bottom-nav a.active i { filter: drop-shadow(0 0 8px rgba(6, 182, 212, .7)); }
+.app-topbar { background: color-mix(in srgb, var(--surface) 80%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom: 1px solid var(--glass-border); }
+
+/* Live connection LED */
+.conn-online::before, .conn-offline::before { animation: led 1.8s ease-in-out infinite; }
+@keyframes led { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .7); } 60% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } }
+
+/* ---------- Dashboard hero: animated gradient with network glow ---------- */
+.hero-card {
+  background: linear-gradient(125deg, #1e1b4b 0%, #312e81 30%, #0e7490 70%, #0c4a6e 100%) !important;
+  background-size: 220% 220% !important;
+  animation: heroShift 16s ease-in-out infinite;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  box-shadow: 0 24px 60px -20px rgba(8, 145, 178, .55) !important;
+  color: #fff;
+}
+@keyframes heroShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.hero-card .big { text-shadow: 0 2px 24px rgba(103, 232, 249, .35); }
+.hero-card .pill { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .18); color: #fff; }
+.hero-card .pill i { color: #67e8f9; }
+.hero-cta { background: #fff !important; color: #1e1b4b !important; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .5); }
+/* Fibre "data flow": thin light streaks crossing the hero */
+.hero-card::after { animation: streak 9s linear infinite; }
+@keyframes streak { 0% { transform: translateX(-30%) rotate(-8deg); opacity: 0; } 20% { opacity: .9; } 100% { transform: translateX(160%) rotate(-8deg); opacity: 0; } }
+.hero-ring { filter: drop-shadow(0 0 18px rgba(103, 232, 249, .45)); }
+
+/* KPI values and counters */
+.kpi .v { font-variant-numeric: tabular-nums; }
+.stagger > * { animation: riseIn .55s var(--ease) both; }
+.stagger > *:nth-child(2) { animation-delay: .06s; }
+.stagger > *:nth-child(3) { animation-delay: .12s; }
+.stagger > *:nth-child(4) { animation-delay: .18s; }
+
+/* Section titles get a neon underline */
+.section-title h2 { position: relative; display: inline-block; padding-bottom: 6px; }
+.section-title h2::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 28px; border-radius: 3px; background: linear-gradient(90deg, #06b6d4, #4f46e5); animation: slideBar 1.2s var(--ease) both; }
+@keyframes slideBar { from { width: 0; } to { width: 28px; } }
+
+/* ---------- Plans: speed gauge ---------- */
+.plan-card { padding-top: 18px; }
+.plan-card::before { height: 3px; background: linear-gradient(90deg, #22d3ee, #6366f1); }
+.plan-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.speed-gauge { width: 84px; height: 84px; flex: 0 0 auto; position: relative; }
+.speed-gauge svg { width: 100%; height: 100%; transform: rotate(135deg); overflow: visible; }
+.speed-gauge circle { fill: none; stroke-width: 9; stroke-linecap: round; }
+.speed-gauge .g-track { stroke: rgba(127, 127, 127, .18); stroke-dasharray: 75 100; }
+.speed-gauge .g-fill { stroke: #06b6d4; stroke-dasharray: 0 100; animation: gaugeIn 1.4s var(--ease) .2s forwards; filter: drop-shadow(0 0 6px rgba(6, 182, 212, .6)); }
+@keyframes gaugeIn { to { stroke-dasharray: var(--g) 100; } }
+.speed-gauge .g-val { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-weight: 800; font-size: 1.05rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.speed-gauge .g-val small { display: block; font-size: .6rem; font-weight: 600; opacity: .7; letter-spacing: .05em; }
+.plan-speed { background: none; -webkit-text-fill-color: currentColor; color: inherit; font-size: 1.1rem; }
+.plan-card:hover .speed-gauge .g-fill { filter: drop-shadow(0 0 10px rgba(34, 211, 238, .9)); }
+
+/* ---------- Login ---------- */
+#view-login .auth-bg .blob { filter: blur(70px); }
+.btn-grad, .btn-login { background-image: linear-gradient(120deg, #4f46e5, #0891b2) !important; box-shadow: 0 14px 30px -12px rgba(8, 145, 178, .7); }
+
+/* ---------- Skeleton shimmer ---------- */
+.skel { background: linear-gradient(90deg, rgba(127, 127, 127, .10) 0%, rgba(34, 211, 238, .22) 50%, rgba(127, 127, 127, .10) 100%) !important; background-size: 200% 100% !important; animation: shimmer 1.4s linear infinite; }
+
+/* ---------- Network map (dashboard) ---------- */
+.netmap { width: 100%; height: auto; display: block; overflow: visible; }
+.netmap .fibre { fill: none; stroke: rgba(6, 182, 212, .38); stroke-width: 1.4; stroke-dasharray: 4 6; animation: netFlow 2.4s linear infinite; }
+@keyframes netFlow { to { stroke-dashoffset: -10; } }
+.netmap .node { stroke: var(--surface); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: pop .5s var(--ease) both; transition: r .2s; }
+.netmap .node:hover { r: 9; }
+.netmap .node.ok { fill: #22c55e; filter: drop-shadow(0 0 4px rgba(34, 197, 94, .6)); }
+.netmap .node.late { fill: #f43f5e; animation: nodeAlarm 1.6s ease-in-out infinite; }
+.netmap .node.susp { fill: #f59e0b; }
+@keyframes nodeAlarm { 0%, 100% { filter: drop-shadow(0 0 0 rgba(244, 63, 94, 0)); } 50% { filter: drop-shadow(0 0 7px rgba(244, 63, 94, .9)); } }
+.netmap .pop-core { fill: #22d3ee; filter: drop-shadow(0 0 10px #22d3ee); }
+.netmap .pop-ring { fill: none; stroke: rgba(34, 211, 238, .55); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ripple 2.4s ease-out infinite; }
+@keyframes ripple { from { transform: scale(.8); opacity: .9; } to { transform: scale(2.1); opacity: 0; } }
+.netmap .packet { fill: #67e8f9; filter: drop-shadow(0 0 4px #67e8f9); }
+.netmap text { fill: currentColor; opacity: .7; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.netmap-legend { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.netmap-legend .lg { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.netmap-legend .lg.ok { background: #22c55e; }
+.netmap-legend .lg.late { background: #f43f5e; }
+.netmap-legend .lg.susp { background: #f59e0b; }
+
+/* Toasts */
+.toast { border-radius: 14px; backdrop-filter: blur(10px); box-shadow: var(--shadow-glow); }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before, .aurora::after, .hero-card, .hero-card::after, .sidebar-brand .logo::after, .conn-online::before, .conn-offline::before,
+  .speed-gauge .g-fill, .section-title h2::after, .stagger > * { animation: none !important; }
+  .speed-gauge .g-fill { stroke-dasharray: var(--g) 100; }
+}

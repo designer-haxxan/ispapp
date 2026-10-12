@@ -1,146 +1,118 @@
-# SaleAPP POS
+# ISP Desk
 
-Offline-first, mobile-first Point of Sale as a static PWA (no build step).
-HTML5 · ES modules · jQuery · Bootstrap 5 · Bootstrap Icons · IndexedDB · Service Worker · eposwala login API.
+Offline-first, mobile-first management app for an internet service provider (ISP) in Pakistan.
+Static PWA (no build step): HTML5 · ES modules · jQuery · Bootstrap 5 · Bootstrap Icons · IndexedDB · Service Worker.
 
-## Features
+It was converted from the earlier SaleAPP POS. The shell, login, router, database layer, backup and service worker were kept. Sales and purchases were replaced with subscribers, plans, monthly billing, collections, complaints, expenses and profit & loss.
 
-- **POS sales**: search, camera/hardware barcode scan, cart with qty/rate/discount, bill discount, tax, cash/bank/credit/partial payments, change calculation, hold/resume, edit, void, returns, receipt printing. The cart survives page refresh.
-- **Purchases**: suppliers, purchase rate, discount, paid/remaining, edit, void, returns. Can update product cost from the latest purchase.
-- **Products & categories**: SKU, barcode (scan or generate EAN-13), unit, purchase/sale/wholesale prices, opening/min stock, compressed images, services (no stock).
-- **Customers & suppliers**: contact info, opening balance, ledger/statement (print), payments.
-- **Accounts / cash book**: cash, bank/wallet, income, expense, asset, liability accounts. Receipts, payments and transfers use double-entry ledger entries.
-- **Stock**: current stock, low/out-of-stock, stock ledger per product, adjustments (add/remove/set count) with void.
-- **Reports** (print + CSV): daily sales, sales by range, sales/purchase returns, product-wise sales/purchases, customer/supplier ledgers, receivables, payables, cash book, account ledger, daily closing, stock (as of date), profit summary.
-- **Backup & restore**: versioned JSON with checksum, validation preview, replace or merge.
-- **PWA**: installable, works fully offline after the first online login.
+## What it does
 
-## Architecture
+| Area | Features |
+|---|---|
+| **Dashboard** | This month's billed, collected and profit or loss. Collection ring. Six-month billed-vs-expenses chart. "Needs a call today" list with one-tap WhatsApp reminders. Quick actions. Low-stock and backup alerts. |
+| **Customers** | Add, edit, search by name, mobile, CNIC, customer code or area. Status: pending install, active, suspended, disconnected. Connection details (PPPoE user, IP, ONU or router serial, area, install date). Balance, overdue and advance credit. History of invoices, payments, complaints and WhatsApp messages. Delete only when there is no history; otherwise disconnect. |
+| **Plans & pricing** | Plans with speed (Mbps), monthly price and connection type. Custom price per customer. Hide a plan instead of deleting it when customers use it. Sample starter plans are provided and must be checked against your own rates. |
+| **Monthly billing** | One-click monthly run for every active or suspended customer. Preview before creating anything. Safe to repeat: each customer is billed once per month. One-off invoices for installation, shifting, repairs or late fees (multiple lines). Invoice view, print, WhatsApp, void. |
+| **Collections** | Record cash, JazzCash, Easypaisa, Raast/IBFT, bank transfer or other, with a transaction ID. Payments match the oldest open invoices first, and any extra becomes advance credit. Today's totals by method for end-of-day reconciliation. Receipt print and WhatsApp. Void a mistaken payment. |
+| **Complaints & faults** | Log "no internet", "slow", "billing dispute", "shifting" or "other" tickets. Priority (high for area outages). Assign, start work, resolve with a note, reopen. Acknowledge the customer on WhatsApp. Ticket numbers TKT-000001. |
+| **Inventory** | ONUs, routers, fibre drop cable, connectors and so on. Stock in, issue to a customer, low-stock alerts, stock value and per-item history. Negative stock is blocked unless allowed in settings. |
+| **Expenses** | Bandwidth/IP transit, fibre and cable, tower rent, electricity and generator, fuel, salaries, repairs, licences and taxes, and more. Month filter and category totals. |
+| **Profit & loss** | Monthly billed (revenue), collected, expenses, profit or loss (accrual), and cash flow. 12-month profit line that draws itself in. Month-by-month table. CSV export for the accountant. |
+| **WhatsApp** | Overdue queue, all-unpaid queue, area outage notice, editable templates, message log, and optional browser notifications. See the limitation below. |
+| **Backup & restore** | Download a JSON backup with checksum. Restore by validating first (structure, duplicates, required fields, record counts, checksum), then either merge or replace (replace requires typing REPLACE). |
+| **Settings** | Business profile, PTA licence and NTN (shown on invoices), payment numbers (JazzCash, Easypaisa, Raast, bank), billing day, due days, advance-credit rule, sales-tax rate, WhatsApp country code, theme, and recent activity log. |
 
-```
-index.html              App shell (splash, login, layout)
-manifest.json           PWA manifest
-service-worker.js       Precache of shell + CDN libs; cache-first; /api/ requests never cached
-css/app.css
-js/app.js               Boot, auth gate + session expiry, router (lazy-loaded modules), connection badge, SW updates
-js/config.js            Login API base URL, support phone, app/schema/backup versions
-js/core/                utils, settings (LocalStorage), UI helpers, shared views
-js/db/                  IndexedDB wrapper (atomic multi-store transactions) + schema
-js/services/            auth, catalog (in-memory search index), posting engine, backup
-js/modules/             dashboard, pos (sale + purchase), documents, products, stock, parties, vouchers, accounts, settings, backup
-js/reports/             reports
-js/printer/             ESC/POS encoder, receipt builder, Bluetooth/RawBT/browser printing
-js/scanner/             camera scanning + keyboard-wedge scanner detection
-```
+Login uses the existing eposwala API (`js/services/auth.js`), with roles Owner, Manager and Collector. Permissions are enforced in the UI and the service layer.
 
-### Storage
+## Billing rules (enforced in the database layer)
+
+- **One transaction per operation.** A run, a payment, a void or a stock move either completes fully or changes nothing.
+- **One plan invoice per customer per month.** A unique index on `periodKey` (`customerId|YYYY-MM`) stops double billing, including if the run is repeated or two devices run it.
+- **Voiding never erases a number.** Invoice and receipt numbers come from a counter inside the same transaction and stay gap-free. A voided invoice keeps its record and releases its billing month, so that month can be re-billed.
+- **A paid invoice cannot be voided directly.** Void its payments first. Voiding a payment takes its amount back off every invoice it paid.
+- **Balances are derived, not stored.** Outstanding, overdue and credit come from invoices and payments. Profit & loss comes from invoices, payments and expenses.
+- **Due dates.** Invoices are dated on the billing day (default the 1st) and due after the due-days setting (default 10).
+
+## WhatsApp: what it can and cannot do
+
+- Each message **opens WhatsApp** (WhatsApp Web or the app) with the text filled in. **You press Send.** This works from a static web app without any server and needs no WhatsApp Business account.
+- Queues let you tap down the list (overdue, all unpaid, one area). Every opened message is logged against the customer.
+- Templates are editable under *WhatsApp → Templates* with placeholders such as `{name}`, `{balance}`, `{due}`, `{payment}`, `{ticket}`.
+- Numbers are normalised: `0300 1234567` becomes `923001234567` for the `wa.me` link.
+
+**Not possible in a static app:**
+
+- **Automatic sending** and **receiving WhatsApp messages** into the app. That needs the WhatsApp Business Cloud API, a server to hold the access token and receive webhooks, and a Meta-approved business. This is the main piece to add next if you want fully automatic reminders.
+- Reading your WhatsApp Web notifications. Browsers do not let a web page read another tab or app.
+
+## Pakistan context used in the design
+
+Public reporting on Pakistani telecom billing, the 2025 PTCL WhatsApp bill-payment launch, and recent fibre-cut outages pointed to these pain points, and the app addresses them:
+
+- **Wrong or disputed bills.** Customers dispute charges, and manual invoicing causes errors. Each invoice shows its lines, the plan, due date and payments applied, and the audit log records changes.
+- **Collections through wallets and bank.** JazzCash, Easypaisa, Raast and bank transfer are recorded with a reference, and receipts are printable and shareable.
+- **Late payment and suspension.** The overdue queue, reminders and per-customer suspend and reactivate status make it easier to chase payments.
+- **Outages and fibre cuts.** Complaints are logged with priority, and one message can be sent per area to tell customers the team is working on it.
+- **Cash handling by collectors.** Today's totals by method make end-of-day cash reconciliation simple.
+
+Check the current PTA licence and sales-tax treatment of internet services with your accountant and enter the rate in Settings. The app does not decide the tax rate for you.
+
+## Data and storage
 
 | Where | What |
 |---|---|
-| IndexedDB `disterp_pos` | All business data: products, categories, customers, suppliers, accounts, sales + items, purchases + items, returns, vouchers, **ledger entries**, **stock moves**, adjustments, held sales, audit log, counters |
-| LocalStorage | Settings (business profile, tax, prefixes, printer, theme), device preferences, `disterp.session` (`{ token, expiresAt, username }`), `disterp.settings`, `disterp.pref.*`, `disterp.draft.*`, and the shared phone id `minipos.deviceId` |
+| IndexedDB `ispdesk_db` | Plans, subscribers, invoices, payments, expenses, inventory, stock moves, complaints, WhatsApp message log, audit log, counters |
+| LocalStorage | Settings (`ispdesk.settings`), session (`ispdesk.session`), device preferences (`ispdesk.pref.*`), and the shared device id |
 
-**Shared origin.** Every GitHub Pages site under `designer-haxxan.github.io` is the *same origin*, so all of them share one IndexedDB, LocalStorage and Cache Storage. This app therefore namespaces everything with `CONFIG.APP_ID` (`disterp`): database `disterp_pos`, keys `disterp.*`, caches `disterp-v*`. Its service worker deletes only its own caches, and rebuilds its cache if another app deleted it. The old shared database `saleapp_pos` (also used by AgriSale / pharmaSaleApp) is never modified. *Backup & Restore* offers to import it after showing its record counts. If you copy this app for another shop, **change `APP_ID`** in `js/config.js` and `service-worker.js`.
+Everything is stored on the device. There is no cloud sync between devices. Use **Backup & Restore** regularly (the dashboard reminds you after 7 days).
 
-**Data integrity.** Each operation (sale, purchase, return, voucher, adjustment, edit, void) runs in **one IndexedDB transaction**. That transaction writes:
+**Old POS data.** The previous POS app used the IndexedDB database `disterp_pos`. ISP Desk uses a new database, so existing POS sales are not loaded into it and the old database is left untouched.
 
-- the document and its lines
-- stock moves and the cached product stock
-- balanced double-entry ledger entries (the transaction is refused if they don't balance)
-- the invoice counter
-- the audit record
-
-Any failure aborts everything. Document IDs are generated when the cart is created, so a double tap or a retry after a refresh is detected as a duplicate instead of saving twice. Invoice numbers (`SALE-000001`…) come from a counter inside the same transaction, backed by a unique index. Failed transactions don't consume numbers.
-
-**Balances and reports are always derived from records.** Customer, supplier and account balances come from ledger entries. Stock-as-of-date comes from stock moves. The cached `product.stock` is updated in the same transaction and can be checked or rebuilt under *Settings → App & data*.
-
-### Authentication
-
-Login uses the eposwala API (`CONFIG.AUTH_API_BASE`, default `https://eposwala.com/api`):
-
-```
-POST /api/login   Content-Type: application/json
-{ "username": "...", "password": "...", "deviceId": "..." }
-2xx  → { "token": "...", "expiresAt": <unix ms>, "username": "..." }
-!2xx → { "error": "missing_fields" | "invalid_credentials" | "device_mismatch" | "account_disabled" }
-```
-
-- **Login requires internet.** Each error code is shown as a specific message; anything else shows "Login failed. Try again."
-- **One device per account.** `deviceId` is a UUID created once per browser and stored in `localStorage["minipos.deviceId"]`. The server binds the account to it, and logging out does not remove the binding. Moving to another phone goes through support (`CONFIG.SUPPORT_PHONE`).
-- **Session.** `{ token, expiresAt, username }` is stored verbatim in `localStorage["disterp.session"]`. The POS works offline, including across restarts, until `expiresAt`. When it passes, the app returns to the login screen, both at startup and during use (checked every minute and on every navigation). Passwords are never stored.
-- **Logout** only clears the local session; the API has no logout endpoint.
-- **Permissions.** The logged-in account is the shop owner and gets every POS function. If the server ever adds a `role` field (`manager` / `cashier`) to the login response, the app's role permissions apply automatically.
-
-### Offline behaviour
-
-- The service worker precaches the shell, every module, icons, CDN libraries and the icon fonts. The app loads with no network at all.
-- All POS work (sales, purchases, stock, payments, ledgers, reports, printing, scanning, backup) runs entirely on local data.
-- The status badge shows **Online / Offline**.
-- The app asks the browser for **persistent storage** so data is not evicted.
+**Shared origin.** All apps on `designer-haxxan.github.io` share one origin. ISP Desk uses the namespace `ispdesk` (`APP_ID` in `js/config.js` and `service-worker.js`) so it does not collide with other apps. Change `APP_ID` if you copy this for another business.
 
 ## Setup
 
-### 1. Login API
+### 1. Configure
 
-Set `AUTH_API_BASE` and `SUPPORT_PHONE` in `js/config.js` if they differ from the defaults.
+Edit `js/config.js` if the login API or support number differs.
 
-**CORS:** `https://eposwala.com/api/login` currently sends no CORS headers. Browsers can therefore only call it from pages served by **https://eposwala.com** itself. To run the app from another origin, including `localhost`, the API must return `Access-Control-Allow-Origin` for that origin and answer the `OPTIONS` preflight with `Access-Control-Allow-Headers: content-type`.
+After first sign-in, go to **Settings** and fill in:
+
+- Business name, helpline, office address, PTA licence number and NTN.
+- JazzCash, Easypaisa, Raast and bank details. These appear on every invoice and reminder.
+- Billing day, due days, sales-tax rate (confirm with your accountant).
+
+Then go to **Plans & pricing**, replace the sample plans with your real rates, and add your customers.
 
 ### 2. Run locally
 
-The app needs to be served over HTTP (ES modules and service worker). `localhost` counts as a secure context. Login from `localhost` only works once the API allows that origin (see CORS above).
+The app needs HTTP (ES modules and service worker). Any static server works, for example:
 
 ```bash
 python -m http.server 8765
 ```
 
-Then open http://localhost:8765.
+Then open http://localhost:8765. Login from localhost works once the eposwala API allows that origin (see CORS below).
 
 ### 3. Deploy
 
-**GitHub Pages:** this repository is served from branch `main`, folder `/ (root)` (*Settings → Pages*), at https://designer-haxxan.github.io/DistERP/. All paths are relative, so the app works from that sub-path. `.nojekyll` makes Pages serve the files unchanged. Login from `github.io` only works once the eposwala API allows the origin `https://designer-haxxan.github.io` (see CORS above).
+GitHub Pages from branch `main`, folder `/ (root)`. `.nojekyll` keeps the files unchanged. HTTPS is required for the service worker.
 
+**CORS:** `https://eposwala.com/api/login` currently allows only its own origin. Other origins need `Access-Control-Allow-Origin` and a preflight that accepts `content-type`.
 
-Host the folder on **https://eposwala.com** (e.g. an IIS site or virtual directory next to `/api`), or on any other HTTPS host once the API allows that origin. **HTTPS is required** for the service worker, camera and Web Bluetooth.
-
-When you change any file, bump `VERSION` in `service-worker.js`. Installed apps update automatically the next time they are opened online (files are fetched bypassing the HTTP cache; the page reloads and POS carts are kept).
+**Updates.** When any file changes, bump `VERSION` in `service-worker.js`. Installed copies refresh the next time they are opened online. Without a bump, cached files keep being served.
 
 ## Backup & restore
 
-- **Export** downloads one JSON file:
-  ```json
-  { "format", "backupVersion", "appVersion", "schemaVersion", "createdAt", "createdBy", "counts", "checksum", "settings", "data": { ... } }
-  ```
-  `data` holds every collection. `checksum` is a SHA-256 of the data. No credentials are included.
-- **Import** validates everything before any data changes:
-  - JSON structure
-  - format and backup/schema versions
-  - IDs and required fields for each record
-  - duplicate records or document numbers
-  - record counts against the header (detects truncation)
-  - checksum (detects corruption or tampering)
-  - ledger balance
-  
-  You then see the backup date and record counts. You can optionally download a safety backup first, then choose:
-  - **Replace**: erases local data and loads the backup. You must type `REPLACE` to confirm. It runs in one transaction, so a failure leaves the existing data untouched.
-  - **Merge**: adds missing records and updates records that are newer in the backup. Documents are merged together with their lines, ledger entries and stock moves, so edited documents are never double-counted. Document-number conflicts are skipped and listed. Stock caches are recomputed afterwards.
-
-## Printing & scanning support
-
-| Capability | Where it works | Notes |
-|---|---|---|
-| Web Bluetooth ESC/POS (58/80 mm) | Chrome/Edge on Android, Windows, macOS, Linux, ChromeOS (HTTPS) | Only **BLE** printers; most cheap "classic Bluetooth SPP" printers are not reachable from browsers. Not available in Safari, Firefox or any iOS browser. Known printer channels are tried first (18F0/2AF1, E781…/BEF8…, ISSC 4953…, FF00/FF02, AE30/AE01, FFE0/FFE1, FEE7/FEC7), then blind discovery. Data goes out in 20-byte chunks by default, with acknowledged writes when the printer supports them (Settings → Transfer speed: 20/100/180 bytes). Connecting retries 3×. The printer reconnects silently via `getDevices()` / `watchAdvertisements()` where supported. Print jobs are queued. |
-| RawBT | Android | Free RawBT app bridges ESC/POS data to classic Bluetooth, USB and network printers. |
-| Browser print | Everywhere | Uses 58/80 mm receipt CSS; works with AirPrint, system print services and PDF. Also used automatically as a fallback. |
-| Urdu receipts | All print methods | Urdu/Arabic text (shop name, products, customers, footer…) is drawn with **Jameel Noori Nastaleeq** (`fonts/`, loaded only for Urdu characters via `unicode-range`). For ESC/POS (Bluetooth/RawBT), only lines that contain Urdu are rasterised and sent as `GS v 0` bitmaps; Latin lines stay as fast printer text. Image mode is selectable in *Settings → Printer → Urdu printing mode*: `GS v 0` (default) or `ESC *` for older printers. *Test print* includes Urdu lines. Font: "Free of charge for Urdu lovers" (embedding: preview & print). |
-| Camera scanning | HTTPS on Android/iOS/desktop | Uses the native `BarcodeDetector` when available (Chrome Android), otherwise lazy-loads `html5-qrcode`. Camera permission errors show guidance and a manual-entry field. |
-| Camera permission help | Android / iOS / desktop | Before requesting, the scanner explains and asks via an **Allow camera** tap. When blocked it diagnoses the cause and shows matching steps: *in-app browser* (WhatsApp/Facebook/Instagram → **Open in Chrome** button), *blocked by the phone* ("Permission denied by system": quick-settings Camera access, Android app permission for Chrome/Samsung Internet), *blocked for the site* (Chrome/Samsung Internet site settings; Chrome only lists a site after it has asked once, and an installed app's *App info → Permissions* can show nothing, which is normal) or *prompt dismissed*. It warns never to use *Clear & reset*, because that deletes the POS data. |
-| Hardware scanners | Everywhere | USB/Bluetooth HID "keyboard wedge" scanners work in the search field and anywhere on the POS screen (fast keystrokes + Enter). |
+- **Export** downloads one JSON file with `format`, `backupVersion`, `schemaVersion`, `createdAt`, `counts`, `checksum`, `settings` and `data`. No passwords or session tokens are included.
+- **Import** checks the file before anything changes: format and version, required fields, duplicate IDs, record counts against the header (detects truncation), checksum (detects tampering), and shows what it contains.
+- **Merge** adds missing records and updates newer ones (counters keep the higher value). **Replace** erases this device's data first and needs the word REPLACE.
 
 ## Known limitations
 
-- **Data lives on the device.** There is no multi-device cloud sync of POS data. Use backups regularly; the dashboard reminds you after 7 days. To combine data from several devices, give each device different number prefixes (*Settings*) and use **Merge**.
-- **Anyone with physical access can read local data.** The offline session gate is client-side. A person with the device and developer tools can read IndexedDB. Use device lock screens.
-- **No user management in the app.** Accounts, passwords, device resets and disabling are handled on the eposwala server side. The API has no endpoints for them.
-- **Cost of goods sold uses the last purchase price** recorded on each sale line, not FIFO or weighted average.
-- **iOS has no Web Bluetooth.** Print via AirPrint or the browser dialog instead.
+- Data lives on the device. There is no multi-device sync, so keep backups and avoid running two devices as the main desk.
+- No automatic WhatsApp sending or receiving (see above).
+- No integration with RADIUS, PPPoE servers or OLTs. Usernames and IPs are recorded by hand.
+- The offline session gate is client-side. Anyone with the device and developer tools can read IndexedDB, so use device lock screens.
+- Late fees are added as one-off invoices, not automatically. Plan prices are shown on the invoice as entered.
+- Cost of inventory is recorded per item and not charged automatically as an expense, to avoid counting it twice. Log supplier bills under Expenses.

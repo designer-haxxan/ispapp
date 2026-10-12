@@ -1,52 +1,51 @@
 // IndexedDB schema definition and migrations.
 import { CONFIG } from '../config.js';
 
-export const DB_NAME = `${CONFIG.APP_ID}_pos`;
-// Database name used by older builds (shared with other apps on the same origin). Never modified; only read on import.
-export const LEGACY_DB_NAME = 'saleapp_pos';
-// Version 2 has the same stores as version 1. It exists because a build of another project was briefly deployed
-// here and upgraded phones' databases to v2; opening with v1 would then fail with a VersionError.
-export const DB_VERSION = 2;
+export const DB_NAME = `${CONFIG.APP_ID}_db`;
+// Database and keys of the previous POS build. Never modified by this app.
+export const LEGACY_DB_NAME = 'disterp_pos';
+export const DB_VERSION = 1;
 
 // Stores that make up the business data (included in backups).
 export const DATA_STORES = [
-  'categories', 'products', 'customers', 'suppliers', 'accounts',
-  'sales', 'saleItems', 'purchases', 'purchaseItems', 'saleReturns', 'purchaseReturns',
-  'vouchers', 'entries', 'stockMoves', 'adjustments', 'holds', 'auditLog', 'meta',
+  'plans', 'subscribers', 'invoices', 'payments', 'expenses',
+  'inventory', 'stockMoves', 'tickets', 'messages', 'auditLog', 'meta',
 ];
 
 const STORES = {
   meta: { keyPath: 'key', indexes: {} },
-  categories: { indexes: { nameLc: 'nameLc' } },
-  products: { indexes: { nameLc: 'nameLc', barcode: 'barcode', sku: 'sku', categoryId: 'categoryId' } },
-  customers: { indexes: { nameLc: 'nameLc', phone: 'phone' } },
-  suppliers: { indexes: { nameLc: 'nameLc', phone: 'phone' } },
-  accounts: { indexes: { type: 'type' } },
-  sales: { indexes: { number: ['number', true], date: 'date', customerId: 'customerId' } },
-  saleItems: { indexes: { saleId: 'saleId', productId: 'productId', date: 'date' } },
-  purchases: { indexes: { number: ['number', true], date: 'date', supplierId: 'supplierId' } },
-  purchaseItems: { indexes: { purchaseId: 'purchaseId', productId: 'productId', date: 'date' } },
-  saleReturns: { indexes: { number: ['number', true], date: 'date', saleId: 'saleId', customerId: 'customerId' } },
-  purchaseReturns: { indexes: { number: ['number', true], date: 'date', purchaseId: 'purchaseId', supplierId: 'supplierId' } },
-  vouchers: { indexes: { number: ['number', true], date: 'date', type: 'type' } },
-  entries: { indexes: { accountId: 'accountId', txnId: 'txnId', date: 'date', acctDate: [['accountId', 'date'], false] } },
-  stockMoves: { indexes: { productId: 'productId', refId: 'refId', date: 'date', prodDate: [['productId', 'date'], false] } },
-  adjustments: { indexes: { number: ['number', true], date: 'date' } },
-  holds: { indexes: { createdAt: 'createdAt' } },
+  plans: { indexes: { nameLc: 'nameLc', active: 'active' } },
+  // number: customer code (CUS-000001). Phone is stored normalised (923XXXXXXXXX) for WhatsApp links.
+  subscribers: { indexes: { number: ['number', true], nameLc: 'nameLc', phone: 'phone', area: 'area', status: 'status', planId: 'planId' } },
+  // periodKey = "<subscriberId>|<YYYY-MM>" only on monthly plan invoices. The unique index stops a
+  // monthly run from billing the same customer twice for the same month. Voiding removes the key.
+  invoices: { indexes: { number: ['number', true], periodKey: ['periodKey', true], subscriberId: 'subscriberId', status: 'status', issueDate: 'issueDate', dueDate: 'dueDate' } },
+  payments: { indexes: { number: ['number', true], subscriberId: 'subscriberId', date: 'date', method: 'method' } },
+  expenses: { indexes: { date: 'date', category: 'category' } },
+  inventory: { indexes: { nameLc: 'nameLc', category: 'category' } },
+  stockMoves: { indexes: { itemId: 'itemId', date: 'date', subscriberId: 'subscriberId' } },
+  tickets: { indexes: { number: ['number', true], subscriberId: 'subscriberId', status: 'status', createdDate: 'createdDate' } },
+  messages: { indexes: { at: 'at', subscriberId: 'subscriberId' } },
   auditLog: { indexes: { at: 'at' } },
 };
 
-export const SYSTEM_ACCOUNTS = [
-  { id: 'cash', name: 'Cash in Hand', type: 'cash' },
-  { id: 'sales', name: 'Sales', type: 'income' },
-  { id: 'sales_returns', name: 'Sales Returns', type: 'income' },
-  { id: 'purchases', name: 'Purchases', type: 'expense' },
-  { id: 'purchase_returns', name: 'Purchase Returns', type: 'expense' },
-  { id: 'tax', name: 'Sales Tax Payable', type: 'liability' },
-  { id: 'equity', name: 'Opening Balance Equity', type: 'equity' },
-  { id: 'income', name: 'Other Income', type: 'income' },
-  { id: 'expense', name: 'General Expenses', type: 'expense' },
+export const PAYMENT_METHODS = {
+  cash: 'Cash',
+  jazzcash: 'JazzCash',
+  easypaisa: 'Easypaisa',
+  raast: 'Raast / IBFT',
+  bank: 'Bank transfer',
+  other: 'Other',
+};
+
+export const EXPENSE_CATEGORIES = [
+  'Bandwidth / IP transit', 'Fiber & cable', 'Routers & ONUs', 'Tower / POP rent', 'Electricity & generator',
+  'Fuel & transport', 'Staff salaries', 'Repairs & maintenance', 'Licences & taxes', 'Marketing', 'Office & misc',
 ];
+
+export const INVENTORY_CATEGORIES = ['ONU / CPE', 'Router', 'Fiber cable', 'UTP / LAN cable', 'Connectors & patch cords', 'Splitter & box', 'Wireless radio', 'Other'];
+
+export const TICKET_CATEGORIES = { fault: 'No internet / fault', slow: 'Slow speed', billing: 'Billing dispute', shifting: 'Shifting / relocation', other: 'Other' };
 
 export function upgrade(db, oldVersion, t) {
   if (oldVersion < 1) {
@@ -58,11 +57,8 @@ export function upgrade(db, oldVersion, t) {
       }
     }
     const now = new Date().toISOString();
-    const acc = t.objectStore('accounts');
-    for (const a of SYSTEM_ACCOUNTS) acc.put({ ...a, system: true, active: 1, createdAt: now, updatedAt: now });
     t.objectStore('meta').put({ key: 'schemaVersion', value: 1 });
     t.objectStore('meta').put({ key: 'createdAt', value: now });
   }
-  // v2: no structural change (see DB_VERSION). Extra stores left by that other build are ignored.
-  // Future migrations: if (oldVersion < 3) { ... }
+  // Future migrations: if (oldVersion < 2) { ... }
 }
